@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -67,9 +69,9 @@ fun RAMTheme(content: @Composable () -> Unit) {
 
 @Composable
 fun MainScreen() {
-    var agentStatus = remember { mutableStateOf("Ready") }
-    var messages = remember { mutableStateOf(listOf<ChatMessage>()) }
-    var inputText = remember { mutableStateOf("") }
+    val agentStatus = remember { mutableStateOf("Ready") }
+    val messages = remember { mutableStateOf(listOf<ChatMessage>()) }
+    val inputText = remember { mutableStateOf("") }
     
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -143,7 +145,7 @@ fun HeaderSection(agentStatus: String) {
                             "Listening..." -> Color(0xFF03DAC6)
                             else -> Color(0xFFCF6679)
                         },
-                        shape = androidx.compose.foundation.shape.CircleShape
+                        shape = CircleShape
                     )
             )
             
@@ -195,18 +197,18 @@ fun ChatBubble(message: ChatMessage) {
     ) {
         Card(
             modifier = Modifier
-                .widthIn(max = 280.dp)
-                .background(
-                    color = if (message.isUser) Color(0xFF3700B3) else Color(0xFF1F1F1F),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
-                ),
-            shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                .widthIn(max = 280.dp),
+            shape = RoundedCornerShape(12.dp)
         ) {
             Text(
                 text = message.content,
                 color = Color.White,
                 fontSize = 14.sp,
-                modifier = Modifier.padding(12.dp)
+                modifier = Modifier
+                    .background(
+                        color = if (message.isUser) Color(0xFF3700B3) else Color(0xFF1F1F1F)
+                    )
+                    .padding(12.dp)
             )
         }
     }
@@ -228,7 +230,7 @@ fun InputSection(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color(0xFF2C2C2C), androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
+                .background(Color(0xFF2C2C2C), RoundedCornerShape(24.dp))
                 .padding(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically

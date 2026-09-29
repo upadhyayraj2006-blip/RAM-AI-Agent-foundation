@@ -72,7 +72,7 @@ dependencies {
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.5")
     
-    // Data storage (will be used in later phases)
+    // Data storage (for Phase 10)
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     
     // Coroutines
@@ -81,6 +81,16 @@ dependencies {
     
     // Logging
     implementation("com.jakewharton.timber:timber:5.0.1")
+    
+    // HTTP Client (for Phase 5+ web tools)
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    
+    // JSON serialization
+    implementation("com.google.code.gson:gson:2.10.1")
+    
+    // Permissions
+    implementation("androidx.activity:activity-ktx:1.8.1")
     
     // Testing
     testImplementation("junit:junit:4.13.2")
