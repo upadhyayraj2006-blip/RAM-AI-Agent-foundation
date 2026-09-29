@@ -11,4 +11,5 @@
     <string name="settings_button">Settings</string>
     <string name="type_message">Type a command...</string>
     <string name="mic_hint">Press to speak</string>
+    <string name="accessibility_service_description">RAM AI Agent Accessibility Service for UI automation and screen understanding</string>
 </resources>
