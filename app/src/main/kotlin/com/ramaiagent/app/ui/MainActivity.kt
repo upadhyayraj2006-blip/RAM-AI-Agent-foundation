@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,14 +26,22 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.ramaiagent.app.RAMApplication
+import com.ramaiagent.app.data.Message
+import com.ramaiagent.app.ui.viewmodel.ChatViewModel
+import com.ramaiagent.app.ui.viewmodel.ChatViewModelFactory
 import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
@@ -42,7 +51,9 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             RAMTheme {
-                MainScreen()
+                val factory = ChatViewModelFactory(RAMApplication.conversationRepository)
+                val viewModel: ChatViewModel = viewModel(factory = factory)
+                MainScreen(viewModel)
             }
         }
     }
@@ -68,10 +79,9 @@ fun RAMTheme(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun MainScreen() {
-    val agentStatus = remember { mutableStateOf("Ready") }
-    val messages = remember { mutableStateOf(listOf<ChatMessage>()) }
-    val inputText = remember { mutableStateOf("") }
+fun MainScreen(viewModel: ChatViewModel) {
+    val conversationState by viewModel.conversationStateFlow.collectAsState()
+    var inputText by remember { mutableStateOf("") }
     
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -84,30 +94,29 @@ fun MainScreen() {
                 .background(Color(0xFF121212))
         ) {
             // Header
-            HeaderSection(agentStatus.value)
+            HeaderSection(conversationState.agentStatus)
             
             // Chat messages
             ChatMessagesSection(
-                messages = messages.value,
+                messages = conversationState.messages,
+                isLoading = conversationState.isLoading,
                 modifier = Modifier.weight(1f)
             )
             
             // Input section
             InputSection(
-                text = inputText.value,
-                onTextChange = { inputText.value = it },
+                text = inputText,
+                onTextChange = { inputText = it },
                 onSend = {
-                    if (inputText.value.isNotBlank()) {
-                        messages.value = messages.value + ChatMessage(inputText.value, isUser = true)
-                        Timber.d("Message sent: ${inputText.value}")
-                        inputText.value = ""
-                        agentStatus.value = "Thinking..."
+                    if (inputText.isNotBlank()) {
+                        viewModel.sendUserMessage(inputText)
+                        inputText = ""
                     }
                 },
                 onVoiceClick = {
-                    Timber.d("Voice input requested")
-                    agentStatus.value = "Listening..."
-                }
+                    viewModel.onVoiceInputRequested()
+                },
+                isEnabled = !conversationState.isLoading
             )
         }
     }
@@ -143,7 +152,8 @@ fun HeaderSection(agentStatus: String) {
                             "Ready" -> Color(0xFF03DAC6)
                             "Thinking..." -> Color(0xFFBB86FC)
                             "Listening..." -> Color(0xFF03DAC6)
-                            else -> Color(0xFFCF6679)
+                            "Error" -> Color(0xFFCF6679)
+                            else -> Color(0xFF808080)
                         },
                         shape = CircleShape
                     )
@@ -159,7 +169,11 @@ fun HeaderSection(agentStatus: String) {
 }
 
 @Composable
-fun ChatMessagesSection(messages: List<ChatMessage>, modifier: Modifier = Modifier) {
+fun ChatMessagesSection(
+    messages: List<Message>,
+    isLoading: Boolean,
+    modifier: Modifier = Modifier
+) {
     if (messages.isEmpty()) {
         Box(
             modifier = modifier
@@ -168,7 +182,7 @@ fun ChatMessagesSection(messages: List<ChatMessage>, modifier: Modifier = Modifi
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "No messages yet",
+                text = "No messages yet. Start by typing or using voice.",
                 color = Color(0xFF808080),
                 fontSize = 14.sp
             )
@@ -185,12 +199,18 @@ fun ChatMessagesSection(messages: List<ChatMessage>, modifier: Modifier = Modifi
                 val message = messages[messages.size - 1 - index]
                 ChatBubble(message)
             }
+            
+            if (isLoading) {
+                item {
+                    LoadingIndicator()
+                }
+            }
         }
     }
 }
 
 @Composable
-fun ChatBubble(message: ChatMessage) {
+fun ChatBubble(message: Message) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
@@ -200,17 +220,54 @@ fun ChatBubble(message: ChatMessage) {
                 .widthIn(max = 280.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
-            Text(
-                text = message.content,
-                color = Color.White,
-                fontSize = 14.sp,
+            Column(
                 modifier = Modifier
                     .background(
                         color = if (message.isUser) Color(0xFF3700B3) else Color(0xFF1F1F1F)
                     )
                     .padding(12.dp)
-            )
+            ) {
+                Text(
+                    text = message.content,
+                    color = Color.White,
+                    fontSize = 14.sp
+                )
+                
+                if (message.toolStatus != null) {
+                    Text(
+                        text = "Tool: ${message.toolStatus}",
+                        color = Color(0xFF808080),
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+                
+                if (message.error != null) {
+                    Text(
+                        text = "Error: ${message.error}",
+                        color = Color(0xFFCF6679),
+                        fontSize = 10.sp,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun LoadingIndicator() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(20.dp),
+            color = Color(0xFFBB86FC),
+            strokeWidth = 2.dp
+        )
     }
 }
 
@@ -219,7 +276,8 @@ fun InputSection(
     text: String,
     onTextChange: (String) -> Unit,
     onSend: () -> Unit,
-    onVoiceClick: () -> Unit
+    onVoiceClick: () -> Unit,
+    isEnabled: Boolean = true
 ) {
     Column(
         modifier = Modifier
@@ -238,7 +296,8 @@ fun InputSection(
             // Voice button
             IconButton(
                 onClick = onVoiceClick,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(36.dp),
+                enabled = isEnabled
             ) {
                 Text("🎤", fontSize = 20.sp)
             }
@@ -263,24 +322,22 @@ fun InputSection(
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White,
                     focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledTextColor = Color.White,
+                    disabledContainerColor = Color.Transparent
                 ),
-                singleLine = true
+                singleLine = true,
+                enabled = isEnabled
             )
             
             // Send button
             IconButton(
                 onClick = onSend,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(36.dp),
+                enabled = isEnabled && text.isNotBlank()
             ) {
                 Text("➤", fontSize = 18.sp, color = Color(0xFFBB86FC))
             }
         }
     }
 }
-
-data class ChatMessage(
-    val content: String,
-    val isUser: Boolean,
-    val timestamp: Long = System.currentTimeMillis()
-)
