@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RAM AI Agent</string>
+    <string name="agent_status_ready">Ready</string>
+    <string name="agent_status_thinking">Thinking...</string>
+    <string name="agent_status_executing">Executing...</string>
+    <string name="agent_status_error">Error</string>
+    <string name="send_button">Send</string>
+    <string name="voice_input_button">Voice</string>
+    <string name="stop_button">Stop</string>
+    <string name="settings_button">Settings</string>
+    <string name="type_message">Type a command...</string>
+    <string name="mic_hint">Press to speak</string>
+</resources>

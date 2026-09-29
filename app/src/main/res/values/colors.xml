@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme colors for AI assistant -->
+    <color name="primary">#1F1F1F</color>
+    <color name="primary_dark">#121212</color>
+    <color name="accent">#BB86FC</color>
+    <color name="background">#121212</color>
+    <color name="surface">#1F1F1F</color>
+    <color name="error">#CF6679</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+</resources>

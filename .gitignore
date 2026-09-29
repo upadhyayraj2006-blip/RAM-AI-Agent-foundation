@@ -1,0 +1,30 @@
+# Gradle files
+.gradle/
+build/
+.gradle
+local.properties
+
+# IDE files
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# Android Studio
+/captures
+.externalNativeBuild
+.cxx
+
+# Signing files
+*.jks
+*.keystore
+
+# Local configuration file
+local.properties
+
+# Secrets/API keys (never commit)
+.env
+.env.local
+secrets.properties
+api_keys.xml
