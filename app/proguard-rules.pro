@@ -17,11 +17,3 @@
 -keepclassmembernames class kotlinx.** {
     volatile <fields>;
 }
-
-# Gson
--keep class com.google.gson.** { *; }
--keep interface com.google.gson.** { *; }
-
-# OkHttp
--dontwarn okhttp3.**
--dontwarn okio.**

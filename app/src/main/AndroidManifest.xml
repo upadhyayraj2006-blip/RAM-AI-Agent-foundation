@@ -11,11 +11,6 @@
     
     <!-- Accessibility Service Permission -->
     <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
-    
-    <!-- Screenshot/Screen capture (API 28+) -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
-        tools:ignore="ScopedStorage" />
 
     <application
         android:name=".RAMApplication"

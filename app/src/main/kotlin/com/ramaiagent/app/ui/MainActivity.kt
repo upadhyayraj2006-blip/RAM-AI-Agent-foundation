@@ -4,12 +4,27 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Card
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -34,30 +49,27 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun RAMTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = darkColorScheme(),
+        colorScheme = darkColorScheme(
+            primary = Color(0xFFBB86FC),
+            primaryContainer = Color(0xFF3700B3),
+            secondary = Color(0xFF03DAC6),
+            secondaryContainer = Color(0xFF018786),
+            background = Color(0xFF121212),
+            surface = Color(0xFF1F1F1F),
+            error = Color(0xFFCF6679),
+            onBackground = Color(0xFFFFFFFF),
+            onSurface = Color(0xFFFFFFFF)
+        ),
         typography = androidx.compose.material3.Typography(),
         content = content
     )
 }
 
 @Composable
-fun darkColorScheme() = androidx.compose.material3.darkColorScheme(
-    primary = Color(0xFFBB86FC),
-    primaryContainer = Color(0xFF3700B3),
-    secondary = Color(0xFF03DAC6),
-    secondaryContainer = Color(0xFF018786),
-    background = Color(0xFF121212),
-    surface = Color(0xFF1F1F1F),
-    error = Color(0xFFCF6679),
-    onBackground = Color(0xFFFFFFFF),
-    onSurface = Color(0xFFFFFFFF)
-)
-
-@Composable
 fun MainScreen() {
-    var agentStatus by remember { mutableStateOf("Ready") }
-    var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
-    var inputText by remember { mutableStateOf("") }
+    var agentStatus = remember { mutableStateOf("Ready") }
+    var messages = remember { mutableStateOf(listOf<ChatMessage>()) }
+    var inputText = remember { mutableStateOf("") }
     
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -70,29 +82,29 @@ fun MainScreen() {
                 .background(Color(0xFF121212))
         ) {
             // Header
-            HeaderSection(agentStatus)
+            HeaderSection(agentStatus.value)
             
             // Chat messages
             ChatMessagesSection(
-                messages = messages,
+                messages = messages.value,
                 modifier = Modifier.weight(1f)
             )
             
             // Input section
             InputSection(
-                text = inputText,
-                onTextChange = { inputText = it },
+                text = inputText.value,
+                onTextChange = { inputText.value = it },
                 onSend = {
-                    if (inputText.isNotBlank()) {
-                        messages = messages + ChatMessage(inputText, isUser = true)
-                        Timber.d("Message sent: $inputText")
-                        inputText = ""
-                        agentStatus = "Thinking..."
+                    if (inputText.value.isNotBlank()) {
+                        messages.value = messages.value + ChatMessage(inputText.value, isUser = true)
+                        Timber.d("Message sent: ${inputText.value}")
+                        inputText.value = ""
+                        agentStatus.value = "Thinking..."
                     }
                 },
                 onVoiceClick = {
                     Timber.d("Voice input requested")
-                    agentStatus = "Listening..."
+                    agentStatus.value = "Listening..."
                 }
             )
         }
@@ -146,16 +158,31 @@ fun HeaderSection(agentStatus: String) {
 
 @Composable
 fun ChatMessagesSection(messages: List<ChatMessage>, modifier: Modifier = Modifier) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        reverseLayout = true,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(messages.size) { index ->
-            val message = messages[messages.size - 1 - index]
-            ChatBubble(message)
+    if (messages.isEmpty()) {
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "No messages yet",
+                color = Color(0xFF808080),
+                fontSize = 14.sp
+            )
+        }
+    } else {
+        LazyColumn(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            reverseLayout = true,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(messages.size) { index ->
+                val message = messages[messages.size - 1 - index]
+                ChatBubble(message)
+            }
         }
     }
 }
@@ -166,7 +193,7 @@ fun ChatBubble(message: ChatMessage) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (message.isUser) Arrangement.End else Arrangement.Start
     ) {
-        androidx.compose.material3.Card(
+        Card(
             modifier = Modifier
                 .widthIn(max = 280.dp)
                 .background(
@@ -207,7 +234,7 @@ fun InputSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Voice button
-            androidx.compose.material3.IconButton(
+            IconButton(
                 onClick = onVoiceClick,
                 modifier = Modifier.size(36.dp)
             ) {
@@ -215,7 +242,7 @@ fun InputSection(
             }
             
             // Text input
-            androidx.compose.material3.TextField(
+            TextField(
                 value = text,
                 onValueChange = onTextChange,
                 modifier = Modifier
@@ -228,7 +255,7 @@ fun InputSection(
                         fontSize = 14.sp
                     )
                 },
-                colors = androidx.compose.material3.TextFieldDefaults.colors(
+                colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.Transparent,
                     unfocusedContainerColor = Color.Transparent,
                     focusedTextColor = Color.White,
@@ -240,7 +267,7 @@ fun InputSection(
             )
             
             // Send button
-            androidx.compose.material3.IconButton(
+            IconButton(
                 onClick = onSend,
                 modifier = Modifier.size(36.dp)
             ) {
